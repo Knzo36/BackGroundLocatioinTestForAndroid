@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -41,8 +42,9 @@ class MainActivity : AppCompatActivity() {
                 val jsonObj = JSONObject(response.toString())
                 val users = jsonObj.getJSONArray("data")
                 val mapper = jacksonObjectMapper()
+                Log.d("ユーザーズjson", users.toString())
 
-                for (i in 0 until (users.length() - 1)) {
+                for (i in 0 until (users.length())) {
                     val user = mapper.readValue<User>(users[i].toString())
                     val ieiru = if (user.is_home) {"家いる"} else {"家いない"}
                     val usersTxt = textView.text
