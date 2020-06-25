@@ -7,22 +7,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.TextView
-import android.widget.Toast
-import com.google.android.gms.location.*
-import android.os.Looper
-import android.util.Log
-import android.util.Log.d
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.File
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -31,17 +27,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-//        val file = "nameFile.txt"
-//        val readFile = File(applicationContext.filesDir, file)
-//        if(readFile.exists()) {
-//            setContentView(R.layout.ieiru)
-//        } else {
             setContentView(R.layout.activity_main)
-//        }
 
         requestPermission()
         createNotificationChannel()
+
+        val textView = findViewById<TextView>(R.id.ieiruTextView)
+        val queue = Volley.newRequestQueue(this)
+        val url = "http://18.176.193.22/users"
+
+        val stringRequest = StringRequest(Request.Method.GET, url,
+            Response.Listener { response ->
+                val jsonObj = JSONObject(response.toString())
+                val users = jsonObj.getJSONArray("data")
+                val mapper = jacksonObjectMapper()
+
+                for (i in 0 until (users.length() - 1)) {
+                    val user = mapper.readValue<User>(users[i].toString())
+                    val ieiru = if (user.is_home) {"家いる"} else {"家いない"}
+                    val usersTxt = textView.text
+                    val userTxt = "${user.name} : ${ieiru}"
+                    textView.text = "${usersTxt} \n ${userTxt}"
+                }
+            },
+            Response.ErrorListener { textView.text = "That didn't work!" })
+
+        queue.add(stringRequest)
 
         startButton.setOnClickListener {
             val intent = Intent(this, LocationService::class.java)
